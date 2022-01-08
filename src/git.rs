@@ -9,6 +9,8 @@ pub trait RepositoryExt {
     fn get_username(&self) -> String;
     // git config user.email
     fn get_email(&self) -> String;
+
+    fn current_user(&self) -> User;
 }
 
 impl RepositoryExt for git2::Repository {
@@ -24,5 +26,23 @@ impl RepositoryExt for git2::Repository {
             .and_then(|config| config.get_string("user.email"))
             .map_err(|_| log::warn!("can't get `user.email`, make sure to execute to `git config --global user.email <email>`"))
             .unwrap_or_default()
+    }
+
+    fn current_user(&self) -> User {
+        let username = self.get_username();
+        let email = self.get_email();
+        User::new(username, email)
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct User {
+    pub name: String,
+    pub email: String,
+}
+
+impl User {
+    pub fn new(name: String, email: String) -> Self {
+        User { name, email }
     }
 }

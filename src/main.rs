@@ -10,7 +10,9 @@ use simplelog::{ColorChoice, TermLogger, TerminalMode};
 use structopt::StructOpt;
 
 use crate::options::Options;
+use crate::rust::RustProjectMaker;
 
+pub mod filesystem;
 pub mod git;
 pub mod macros;
 pub mod options;
@@ -22,7 +24,7 @@ pub fn main() -> Result<()> {
 
     let opts: Options = Options::from_args();
     match opts {
-        Options::Rust(options) => crate::rust::exec(options)?,
+        Options::Rust(options) => RustProjectMaker::new().execute(options)?,
     }
     Ok(())
 }

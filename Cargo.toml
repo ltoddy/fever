@@ -14,7 +14,6 @@ manman = "0.1.2"
 anyhow = "1.0"
 chrono = "0.4"
 git2 = "0.13"
-lazy_static = "1.4"
 log = "0.4"
 serde = { version = "1.0", features = ["derive"] }
 simplelog = "0.11"
