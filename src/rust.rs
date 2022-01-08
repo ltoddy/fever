@@ -17,15 +17,15 @@ use serde::Serialize;
 use crate::filesystem::basename;
 use crate::git::RepositoryExt;
 use crate::hash_map;
-use crate::options::rust::{InitOptions, NewOptions, Options};
+use crate::options::rust::{InitOptions, NewOptions, NewProjectKind, Options};
 use crate::template::render;
 
 #[derive(Debug, Serialize)]
 struct TemplateContext {
     username: String,
     email: String,
-    name: String,
     // project name
+    name: String,
     edition: String,
     description: String,
 
@@ -42,16 +42,17 @@ impl TemplateContext {
 
 #[derive(Default)]
 pub struct RustProjectMaker {
-    files: HashMap<PathBuf, &'static str>,
+    plain_files: HashMap<PathBuf, &'static str>,
     templates: HashMap<PathBuf, &'static str>,
 }
 
 impl RustProjectMaker {
     pub fn new() -> Self {
-        let files = hash_map! {
+        let plain_files = hash_map! {
             PathBuf::from(".license.template") => include_str!("templates/rust/.license.template"),
             PathBuf::from(".gitignore") => include_str!("templates/rust/.gitignore"),
             PathBuf::from("src/main.rs") => include_str!("templates/rust/src/main.rs"),
+            PathBuf::from("src/lib.rs") => include_str!("templates/rust/src/lib.rs"),
             PathBuf::from("rustfmt.toml") => include_str!("templates/rust/rustfmt.toml"),
             PathBuf::from("LICENSE-APACHE") => include_str!("templates/rust/LICENSE-APACHE"),
         };
@@ -61,7 +62,7 @@ impl RustProjectMaker {
             PathBuf::from("LICENSE-MIT") => include_str!("templates/rust/LICENSE-MIT"),
         };
 
-        RustProjectMaker { files, templates }
+        RustProjectMaker { plain_files, templates }
     }
 
     pub fn execute(self, options: Options) -> Result<()> {
@@ -72,7 +73,7 @@ impl RustProjectMaker {
     }
 
     fn initialize_project(self, options: InitOptions) -> Result<()> {
-        let InitOptions { kind: _, name, edition, description } = options;
+        let InitOptions { kind, name, edition, description } = options;
         let project_dir = current_dir().with_context(|| "the current working directory value is invalid")?;
 
         Self::create_src_directory(&project_dir)?;
@@ -88,7 +89,7 @@ impl RustProjectMaker {
     }
 
     fn new_project(self, options: NewOptions) -> Result<()> {
-        let NewOptions { path: project_dir, kind: _, name, edition, description } = options;
+        let NewOptions { path: project_dir, kind, name, edition, description } = options;
 
         if !project_dir.is_dir() {
             log::info!("creating directory `{}`", project_dir.display());
@@ -107,8 +108,8 @@ impl RustProjectMaker {
     }
 
     fn create_project_files(self, project_dir: &Path, context: &TemplateContext) -> Result<()> {
-        let Self { files, templates } = self;
-        for (dst, content) in files {
+        let Self { plain_files, templates } = self;
+        for (dst, content) in plain_files {
             log::info!("writing file `{}`", dst.display());
             fs::write(project_dir.join(&dst), content).with_context(|| format!("write `{}` failed", dst.display()))?;
         }
