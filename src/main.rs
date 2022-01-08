@@ -8,6 +8,7 @@ use structopt::StructOpt;
 
 use crate::options::Options;
 
+pub mod macros;
 pub mod options;
 pub mod rust;
 
