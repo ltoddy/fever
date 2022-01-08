@@ -6,11 +6,9 @@
 
 use structopt::StructOpt;
 
-use self::rust::NewOptions;
-
 pub mod rust;
 
 #[derive(Clone, Debug, StructOpt)]
 pub enum Options {
-    Rust(NewOptions),
+    Rust(rust::Options),
 }

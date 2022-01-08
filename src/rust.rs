@@ -13,11 +13,11 @@ use chrono::{Datelike, Local};
 use git2::Repository;
 use lazy_static::lazy_static;
 use serde::Serialize;
-use tinytemplate::TinyTemplate;
 
 use crate::git::RepositoryExt;
 use crate::hash_map;
-use crate::options::rust::NewOptions;
+use crate::options::rust::{InitOptions, NewOptions, Options};
+use crate::template::render;
 
 lazy_static! {
     static ref FILES: HashMap<&'static str, &'static str> = hash_map! {
@@ -49,12 +49,19 @@ impl TemplateContext {
     }
 }
 
-fn render_template(content: &str, context: &TemplateContext) -> String {
-    let mut template = TinyTemplate::new();
-    template.add_template("just", content).and_then(|_| template.render("just", context)).unwrap()
+// TODO
+pub fn exec(options: Options) -> Result<()> {
+    match options {
+        Options::Init(options) => init(options),
+        Options::New(options) => new(options),
+    }
 }
 
-pub fn create(options: NewOptions) -> Result<()> {
+fn init(options: InitOptions) -> Result<()> {
+    Ok(())
+}
+
+fn new(options: NewOptions) -> Result<()> {
     let NewOptions { path: project_dir, name, edition, .. } = options;
 
     if !project_dir.is_dir() {
@@ -71,12 +78,13 @@ pub fn create(options: NewOptions) -> Result<()> {
     let repository = Repository::init(&project_dir).with_context(|| "initialize git repository failed")?;
     let email = repository.get_email();
     let username = repository.get_username();
-    let project = name.unwrap_or(project_dir.file_stem().and_then(|name| name.to_str()).map(|name| name.to_string()).unwrap_or_default());
+    let project =
+        name.unwrap_or_else(|| project_dir.file_stem().and_then(|name| name.to_str()).map(|name| name.to_string()).unwrap_or_default());
     let context = TemplateContext::new(username, email, project, Local::now().year(), edition);
 
     for (dst, content) in TEMPLATES.deref() {
         log::info!("writing file `{}`", dst);
-        fs::write(project_dir.join(dst), render_template(content, &context)).with_context(|| format!("write `{}` failed", dst))?;
+        fs::write(project_dir.join(dst), render(content, &context)).with_context(|| format!("write `{}` failed", dst))?;
     }
     for (dst, content) in FILES.deref() {
         log::info!("writing file `{}`", dst);

@@ -15,13 +15,14 @@ pub mod git;
 pub mod macros;
 pub mod options;
 pub mod rust;
+pub mod template;
 
 pub fn main() -> Result<()> {
     TermLogger::init(Debug, Default::default(), TerminalMode::Mixed, ColorChoice::Auto).unwrap();
 
     let opts: Options = Options::from_args();
     match opts {
-        Options::Rust(options) => crate::rust::create(options)?,
+        Options::Rust(options) => crate::rust::exec(options)?,
     }
     Ok(())
 }

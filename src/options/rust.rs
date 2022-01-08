@@ -10,13 +10,18 @@ use std::str::FromStr;
 use anyhow::Error;
 use structopt::StructOpt;
 
-#[derive(Clone, Debug)]
-pub enum VersionControl {
-    Git,
-    Hg,
-    Pijul,
-    Fossil,
-    NoVcs,
+#[derive(Clone, Debug, StructOpt)]
+pub enum Options {
+    Init(InitOptions),
+    New(NewOptions),
+}
+
+#[derive(Clone, Debug, StructOpt)]
+pub struct InitOptions {
+    pub kind: NewProjectKind,
+    pub name: Option<String>,
+    #[structopt(default_value = "2021")]
+    pub edition: String,
 }
 
 #[derive(Clone, Debug, StructOpt)]
