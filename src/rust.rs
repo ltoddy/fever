@@ -15,8 +15,9 @@ use lazy_static::lazy_static;
 use serde::Serialize;
 use tinytemplate::TinyTemplate;
 
+use crate::git::RepositoryExt;
 use crate::hash_map;
-use crate::options::rust;
+use crate::options::rust::NewOptions;
 
 lazy_static! {
     static ref FILES: HashMap<&'static str, &'static str> = hash_map! {
@@ -35,15 +36,16 @@ lazy_static! {
 
 #[derive(Debug, Serialize)]
 struct TemplateContext {
-    name: String,
+    username: String,
     email: String,
     project: String,
     year: i32,
+    edition: String,
 }
 
 impl TemplateContext {
-    pub fn new(name: String, email: String, project: String, year: i32) -> Self {
-        TemplateContext { name, email, project, year }
+    pub fn new(username: String, email: String, project: String, year: i32, edition: String) -> Self {
+        TemplateContext { username, email, project, year, edition }
     }
 }
 
@@ -52,36 +54,33 @@ fn render_template(content: &str, context: &TemplateContext) -> String {
     template.add_template("just", content).and_then(|_| template.render("just", context)).unwrap()
 }
 
-pub fn create(options: rust::NewOptions) -> Result<()> {
-    let now = Local::now();
-    let project_directory = options.path;
-    if !project_directory.is_dir() {
-        fs::create_dir(&project_directory)
-            .with_context(|| format!("can't create directory `{:?}`", project_directory.display()))?;
+pub fn create(options: NewOptions) -> Result<()> {
+    let NewOptions { path: project_dir, name, edition, .. } = options;
+
+    if !project_dir.is_dir() {
+        log::info!("creating directory `{}`", project_dir.display());
+        fs::create_dir(&project_dir).with_context(|| format!("can't create directory `{:?}`", project_dir.display()))?;
     }
-    let src_directory = project_directory.join("src");
-    if !src_directory.is_dir() {
-        fs::create_dir(&src_directory)
-            .with_context(|| format!("can't create directory `{:?}`", src_directory.display()))?;
+    let src_dir = project_dir.join("src");
+    if !src_dir.is_dir() {
+        log::info!("creating directory `{}`", src_dir.display());
+        fs::create_dir(&src_dir).with_context(|| format!("can't create directory `{:?}`", src_dir.display()))?;
     }
 
-    let repository = Repository::init(&project_directory).with_context(|| "initialize git repository failed")?;
-    let repo_config = repository.config()?;
-    let email = repo_config.get_string("user.email").with_context(|| {
-        "can't get `user.email`, make sure to execute to `git config --global user.email <email>` command"
-    })?;
-    let name = repo_config.get_string("user.name").with_context(|| {
-        "can't get `user.email`, make sure to execute to `git config --global user.name <name>` command"
-    })?;
-    let project =
-        project_directory.file_stem().and_then(|name| name.to_str()).map(|name| name.to_string()).unwrap_or_default();
-    for (dst, content) in FILES.deref() {
-        fs::write(project_directory.join(dst), content).with_context(|| format!("write `{}` failed", dst))?;
-    }
-    let context = TemplateContext::new(name, email, project, now.year());
+    log::info!("initializing git repository for `{}`", project_dir.display());
+    let repository = Repository::init(&project_dir).with_context(|| "initialize git repository failed")?;
+    let email = repository.get_email();
+    let username = repository.get_username();
+    let project = name.unwrap_or(project_dir.file_stem().and_then(|name| name.to_str()).map(|name| name.to_string()).unwrap_or_default());
+    let context = TemplateContext::new(username, email, project, Local::now().year(), edition);
+
     for (dst, content) in TEMPLATES.deref() {
-        fs::write(project_directory.join(dst), render_template(content, &context))
-            .with_context(|| format!("write `{}` failed", dst))?;
+        log::info!("writing file `{}`", dst);
+        fs::write(project_dir.join(dst), render_template(content, &context)).with_context(|| format!("write `{}` failed", dst))?;
+    }
+    for (dst, content) in FILES.deref() {
+        log::info!("writing file `{}`", dst);
+        fs::write(project_dir.join(dst), content).with_context(|| format!("write `{}` failed", dst))?;
     }
 
     Ok(())
