@@ -12,9 +12,9 @@ use structopt::StructOpt;
 use crate::options::Options;
 use crate::rust::RustProjectMaker;
 
+pub mod datetime;
 pub mod filesystem;
 pub mod git;
-pub mod macros;
 pub mod options;
 pub mod rust;
 pub mod template;

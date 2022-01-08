@@ -4,21 +4,30 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-use std::collections::HashMap;
 use std::env::current_dir;
 use std::fs;
 use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result};
-use chrono::{Datelike, Local};
 use git2::Repository;
 use serde::Serialize;
 
+use crate::datetime::current_year;
 use crate::filesystem::basename;
 use crate::git::RepositoryExt;
-use crate::hash_map;
 use crate::options::rust::{InitOptions, NewOptions, NewProjectKind, Options};
 use crate::template::render;
+
+const LICENSE_TEMPLATE: &str = include_str!("templates/rust/.license.template");
+const GIT_IGNORE: &str = include_str!("templates/rust/.gitignore");
+const MAIN_RS: &str = include_str!("templates/rust/src/main.rs");
+const LIB_RS: &str = include_str!("templates/rust/src/lib.rs");
+const RUSTFMT_TOML: &str = include_str!("templates/rust/rustfmt.toml");
+const LICENSE_APACHE: &str = include_str!("templates/rust/LICENSE-APACHE");
+
+const CARGO_TOML_TEMPLATE: &str = include_str!("templates/rust/Cargo.toml.template");
+const README_TEMPLATE: &str = include_str!("templates/rust/README.md.template");
+const LICENSE_MIT: &str = include_str!("templates/rust/LICENSE-MIT");
 
 #[derive(Debug, Serialize)]
 struct TemplateContext {
@@ -34,7 +43,7 @@ struct TemplateContext {
 
 impl TemplateContext {
     pub fn new(username: String, email: String, name: String, edition: String, description: String) -> Self {
-        let year = Local::now().year();
+        let year = current_year();
 
         TemplateContext { username, email, name, edition, description, year }
     }
@@ -42,27 +51,29 @@ impl TemplateContext {
 
 #[derive(Default)]
 pub struct RustProjectMaker {
-    plain_files: HashMap<PathBuf, &'static str>,
-    templates: HashMap<PathBuf, &'static str>,
+    bin_file: (PathBuf, &'static str),
+    lib_file: (PathBuf, &'static str),
+    common_plain_files: Vec<(PathBuf, &'static str)>,
+    templates: Vec<(PathBuf, &'static str)>,
 }
 
 impl RustProjectMaker {
     pub fn new() -> Self {
-        let plain_files = hash_map! {
-            PathBuf::from(".license.template") => include_str!("templates/rust/.license.template"),
-            PathBuf::from(".gitignore") => include_str!("templates/rust/.gitignore"),
-            PathBuf::from("src/main.rs") => include_str!("templates/rust/src/main.rs"),
-            PathBuf::from("src/lib.rs") => include_str!("templates/rust/src/lib.rs"),
-            PathBuf::from("rustfmt.toml") => include_str!("templates/rust/rustfmt.toml"),
-            PathBuf::from("LICENSE-APACHE") => include_str!("templates/rust/LICENSE-APACHE"),
-        };
-        let templates = hash_map! {
-            PathBuf::from("Cargo.toml") => include_str!("templates/rust/Cargo.toml.template"),
-            PathBuf::from("README.md")  => include_str!("templates/rust/README.md.template"),
-            PathBuf::from("LICENSE-MIT") => include_str!("templates/rust/LICENSE-MIT"),
-        };
+        let bin_file = (PathBuf::from("src/main.rs"), MAIN_RS);
+        let lib_file = (PathBuf::from("src/lib.rs"), LIB_RS);
+        let common_plain_files = vec![
+            (PathBuf::from(".license.template"), LICENSE_TEMPLATE),
+            (PathBuf::from(".gitignore"), GIT_IGNORE),
+            (PathBuf::from("rustfmt.toml"), RUSTFMT_TOML),
+            (PathBuf::from("LICENSE-APACHE"), LICENSE_APACHE),
+        ];
+        let templates = vec![
+            (PathBuf::from("Cargo.toml"), CARGO_TOML_TEMPLATE),
+            (PathBuf::from("README.md"), README_TEMPLATE),
+            (PathBuf::from("LICENSE-MIT"), LICENSE_MIT),
+        ];
 
-        RustProjectMaker { plain_files, templates }
+        RustProjectMaker { bin_file, lib_file, common_plain_files, templates }
     }
 
     pub fn execute(self, options: Options) -> Result<()> {
@@ -84,7 +95,7 @@ impl RustProjectMaker {
         let name = name.or_else(|| basename(&project_dir)).unwrap_or_default();
         let context = TemplateContext::new(user.name, user.email, name, edition, description);
 
-        self.create_project_files(&project_dir, &context)?;
+        self.create_project_files(kind, &project_dir, &context)?;
         Ok(())
     }
 
@@ -103,19 +114,29 @@ impl RustProjectMaker {
         let name = name.or_else(|| basename(&project_dir)).unwrap_or_default();
         let context = TemplateContext::new(user.name, user.email, name, edition, description);
 
-        self.create_project_files(&project_dir, &context)?;
+        self.create_project_files(kind, &project_dir, &context)?;
         Ok(())
     }
 
-    fn create_project_files(self, project_dir: &Path, context: &TemplateContext) -> Result<()> {
-        let Self { plain_files, templates } = self;
-        for (dst, content) in plain_files {
+    fn create_project_files(self, kind: NewProjectKind, project_dir: &Path, context: &TemplateContext) -> Result<()> {
+        let Self { bin_file, lib_file, common_plain_files, templates } = self;
+        for (dst, content) in common_plain_files {
             log::info!("writing file `{}`", dst.display());
             fs::write(project_dir.join(&dst), content).with_context(|| format!("write `{}` failed", dst.display()))?;
         }
         for (dst, content) in templates {
             log::info!("writing file `{}`", dst.display());
             fs::write(project_dir.join(&dst), render(content, context)).with_context(|| format!("write `{}` failed", dst.display()))?;
+        }
+        match kind {
+            NewProjectKind::Bin => {
+                log::info!("writing file `{}`", bin_file.0.display());
+                fs::write(project_dir.join(&bin_file.0), bin_file.1).with_context(|| format!("write `{}` failed", bin_file.0.display()))?;
+            }
+            NewProjectKind::Lib => {
+                log::info!("writing file `{}`", lib_file.0.display());
+                fs::write(project_dir.join(&lib_file.0), lib_file.1).with_context(|| format!("write `{}` failed", lib_file.0.display()))?;
+            }
         }
 
         Ok(())
