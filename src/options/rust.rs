@@ -18,18 +18,27 @@ pub enum Options {
 
 #[derive(Clone, Debug, StructOpt)]
 pub struct InitOptions {
+    #[structopt(long = "kind", default_value = "bin")]
     pub kind: NewProjectKind,
+
+    #[structopt(long = "name")]
     pub name: Option<String>,
-    #[structopt(default_value = "2021")]
+
+    #[structopt(long = "edition", default_value = "2021")]
     pub edition: String,
 }
 
 #[derive(Clone, Debug, StructOpt)]
 pub struct NewOptions {
-    pub kind: NewProjectKind,
     pub path: PathBuf,
+
+    #[structopt(long = "kind", default_value = "bin")]
+    pub kind: NewProjectKind,
+
+    #[structopt(long = "name")]
     pub name: Option<String>,
-    #[structopt(default_value = "2021")]
+
+    #[structopt(long = "edition", default_value = "2021")]
     pub edition: String,
     // pub registry: Option<String>, TODO
 }
