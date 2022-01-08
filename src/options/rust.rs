@@ -26,6 +26,9 @@ pub struct InitOptions {
 
     #[structopt(long = "edition", default_value = "2021")]
     pub edition: String,
+
+    #[structopt(long = "description", default_value = "")]
+    pub description: String,
 }
 
 #[derive(Clone, Debug, StructOpt)]
@@ -40,6 +43,9 @@ pub struct NewOptions {
 
     #[structopt(long = "edition", default_value = "2021")]
     pub edition: String,
+
+    #[structopt(long = "description", default_value = "")]
+    pub description: String,
     // pub registry: Option<String>, TODO
 }
 

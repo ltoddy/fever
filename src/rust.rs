@@ -39,13 +39,17 @@ struct TemplateContext {
     username: String,
     email: String,
     project: String,
-    year: i32,
     edition: String,
+    description: String,
+
+    year: i32,
 }
 
 impl TemplateContext {
-    pub fn new(username: String, email: String, project: String, year: i32, edition: String) -> Self {
-        TemplateContext { username, email, project, year, edition }
+    pub fn new(username: String, email: String, project: String, edition: String, description: String) -> Self {
+        let year = Local::now().year();
+
+        TemplateContext { username, email, project, edition, description, year }
     }
 }
 
@@ -62,7 +66,7 @@ fn init(options: InitOptions) -> Result<()> {
 }
 
 fn new(options: NewOptions) -> Result<()> {
-    let NewOptions { path: project_dir, name, edition, .. } = options;
+    let NewOptions { path: project_dir, kind, name, edition, description } = options;
 
     if !project_dir.is_dir() {
         log::info!("creating directory `{}`", project_dir.display());
@@ -80,7 +84,7 @@ fn new(options: NewOptions) -> Result<()> {
     let username = repository.get_username();
     let project =
         name.unwrap_or_else(|| project_dir.file_stem().and_then(|name| name.to_str()).map(|name| name.to_string()).unwrap_or_default());
-    let context = TemplateContext::new(username, email, project, Local::now().year(), edition);
+    let context = TemplateContext::new(username, email, project, edition, description);
 
     for (dst, content) in TEMPLATES.deref() {
         log::info!("writing file `{}`", dst);
