@@ -5,3 +5,7 @@ edition = "2021"
 
 [build-dependencies]
 manman = "0.1.2"
+
+[dependencies]
+anyhow = "1.0"
+structopt = "0.3"

@@ -4,9 +4,13 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-use std::io;
+use structopt::StructOpt;
 
-pub fn main() -> io::Result<()> {
-    manman::setup("fever", "man/fever.1")?;
-    Ok(())
+use self::rust::NewOptions;
+
+pub mod rust;
+
+#[derive(Clone, Debug, StructOpt)]
+pub enum Options {
+    Rust(NewOptions),
 }
