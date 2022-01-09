@@ -30,6 +30,6 @@ pub fn main() -> Result<()> {
         Options::Rust(options) => RustProjectMaker::new().execute(options)?,
     }
     let elapsed = now.elapsed();
-    log::info!("finished make project in {}ms", elapsed.as_millis());
+    log::info!("finished make project in {:?}", elapsed);
     Ok(())
 }
