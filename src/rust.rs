@@ -152,7 +152,7 @@ impl RustProjectMaker {
         let github_workflows_dir = project_dir.join(".github/workflows");
         if !github_workflows_dir.is_dir() {
             log::info!("creating directory `{}`", github_workflows_dir.display());
-            fs::create_dir(&github_workflows_dir)
+            fs::create_dir_all(&github_workflows_dir)
                 .with_context(|| format!("can't create directory `{:?}`", github_workflows_dir.display()))?;
         }
         Ok(github_workflows_dir)

@@ -23,3 +23,6 @@ struct Template<'template> {
 }
 
 impl<'template> Template<'template> {}
+
+#[cfg(test)]
+pub mod test {}
