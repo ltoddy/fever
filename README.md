@@ -6,7 +6,7 @@ Prerequisites:
 
 1. Git (`brew install git`)
 2. rust (`curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`)
-3. install this project (`git clone git@github.com:ltoddy/fever.git && cargo install --path fever`)
+3. fever (`cargo install fever`)
 
 ### Usage
 

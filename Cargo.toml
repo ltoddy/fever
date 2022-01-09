@@ -1,11 +1,14 @@
 [package]
 name = "fever"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 authors = ["ltoddy <taoliu0509@gmail.com>"]
 license = "MIT OR Apache-2.0"
 readme = "README.md"
-description = "setup the on-line manual pages"
+description = "Initialize project using templates."
+homepage = "https://github.com/ltoddy/fever"
+repository = "https://github.com/ltoddy/fever"
+documentation = "https://docs.rs/fever"
 
 [build-dependencies]
 manman = "0.1.2"
