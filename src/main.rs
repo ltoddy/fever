@@ -4,6 +4,8 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
+use std::time::Instant;
+
 use anyhow::Result;
 use log::LevelFilter::Debug;
 use simplelog::{ColorChoice, TermLogger, TerminalMode};
@@ -23,8 +25,11 @@ pub fn main() -> Result<()> {
     TermLogger::init(Debug, Default::default(), TerminalMode::Mixed, ColorChoice::Auto).unwrap();
 
     let opts: Options = Options::from_args();
+    let now = Instant::now();
     match opts {
         Options::Rust(options) => RustProjectMaker::new().execute(options)?,
     }
+    let elapsed = now.elapsed();
+    log::info!("finished make project in {}ms", elapsed.as_millis());
     Ok(())
 }
