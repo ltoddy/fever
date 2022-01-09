@@ -23,7 +23,9 @@ const GIT_IGNORE: &str = include_str!("templates/rust/.gitignore");
 const MAIN_RS: &str = include_str!("templates/rust/src/main.rs");
 const LIB_RS: &str = include_str!("templates/rust/src/lib.rs");
 const RUSTFMT_TOML: &str = include_str!("templates/rust/rustfmt.toml");
+const RUST_TOOLCHAIN: &str = include_str!("templates/rust/rust-toolchain");
 const LICENSE_APACHE: &str = include_str!("templates/rust/LICENSE-APACHE");
+const GITHUB_WORKFLOWS_CI_YML: &str = include_str!("templates/rust/.github/workflows/ci.yml");
 
 const CARGO_TOML_TEMPLATE: &str = include_str!("templates/rust/Cargo.toml.template");
 const README_TEMPLATE: &str = include_str!("templates/rust/README.md.template");
@@ -65,7 +67,9 @@ impl RustProjectMaker {
             (PathBuf::from(".license.template"), LICENSE_TEMPLATE),
             (PathBuf::from(".gitignore"), GIT_IGNORE),
             (PathBuf::from("rustfmt.toml"), RUSTFMT_TOML),
+            (PathBuf::from("rust-toolchain"), RUST_TOOLCHAIN),
             (PathBuf::from("LICENSE-APACHE"), LICENSE_APACHE),
+            (PathBuf::from(".github/workflows/ci.yml"), GITHUB_WORKFLOWS_CI_YML),
         ];
         let templates = vec![
             (PathBuf::from("Cargo.toml"), CARGO_TOML_TEMPLATE),
@@ -87,6 +91,7 @@ impl RustProjectMaker {
         let InitOptions { kind, name, edition, description } = options;
         let project_dir = current_dir().with_context(|| "the current working directory value is invalid")?;
 
+        Self::create_github_workflows_directory(&project_dir)?;
         Self::create_src_directory(&project_dir)?;
 
         log::info!("initializing git repository for `{}`", project_dir.display());
@@ -106,6 +111,7 @@ impl RustProjectMaker {
             log::info!("creating directory `{}`", project_dir.display());
             fs::create_dir(&project_dir).with_context(|| format!("can't create directory `{:?}`", project_dir.display()))?;
         }
+        Self::create_github_workflows_directory(&project_dir)?;
         Self::create_src_directory(&project_dir)?;
 
         log::info!("initializing git repository for `{}`", project_dir.display());
@@ -140,6 +146,16 @@ impl RustProjectMaker {
         }
 
         Ok(())
+    }
+
+    fn create_github_workflows_directory(project_dir: &Path) -> Result<PathBuf> {
+        let github_workflows_dir = project_dir.join(".github/workflows");
+        if !github_workflows_dir.is_dir() {
+            log::info!("creating directory `{}`", github_workflows_dir.display());
+            fs::create_dir(&github_workflows_dir)
+                .with_context(|| format!("can't create directory `{:?}`", github_workflows_dir.display()))?;
+        }
+        Ok(github_workflows_dir)
     }
 
     fn create_src_directory(project_dir: &Path) -> Result<PathBuf> {
