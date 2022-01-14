@@ -18,7 +18,6 @@ use crate::git::RepositoryExt;
 use crate::options::rust::{InitOptions, NewOptions, NewProjectKind, Options};
 use crate::template::render;
 
-const LICENSE_TEMPLATE: &str = include_str!("templates/rust/.license.template");
 const GIT_IGNORE: &str = include_str!("templates/rust/.gitignore");
 const MAIN_RS: &str = include_str!("templates/rust/src/main.rs");
 const LIB_RS: &str = include_str!("templates/rust/src/lib.rs");
@@ -64,7 +63,6 @@ impl RustProjectMaker {
         let bin_file = (PathBuf::from("src/main.rs"), MAIN_RS);
         let lib_file = (PathBuf::from("src/lib.rs"), LIB_RS);
         let common_plain_files = vec![
-            (PathBuf::from(".license.template"), LICENSE_TEMPLATE),
             (PathBuf::from(".gitignore"), GIT_IGNORE),
             (PathBuf::from("rustfmt.toml"), RUSTFMT_TOML),
             (PathBuf::from("rust-toolchain"), RUST_TOOLCHAIN),
