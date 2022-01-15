@@ -9,11 +9,12 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result};
+use chrono::Datelike;
+use chrono::Local;
 use git2::Repository;
 use serde::Serialize;
 
 use crate::cli::rust::{Args, InitArgs, NewArgs, NewProjectKind};
-use crate::datetime::current_year;
 use crate::filesystem::basename;
 use crate::git::RepositoryExt;
 use crate::template::render;
@@ -44,21 +45,22 @@ struct TemplateContext {
 
 impl TemplateContext {
     pub fn new(username: String, email: String, name: String, edition: String, description: String) -> Self {
-        let year = current_year();
+        let now = Local::now();
+        let year = now.year();
 
         TemplateContext { username, email, name, edition, description, year }
     }
 }
 
 #[derive(Default)]
-pub struct RustProjectMaker {
+pub struct ProjectMaker {
     bin_file: (PathBuf, &'static str),
     lib_file: (PathBuf, &'static str),
     common_plain_files: Vec<(PathBuf, &'static str)>,
     templates: Vec<(PathBuf, &'static str)>,
 }
 
-impl RustProjectMaker {
+impl ProjectMaker {
     pub fn new() -> Self {
         let bin_file = (PathBuf::from("src/main.rs"), MAIN_RS);
         let lib_file = (PathBuf::from("src/lib.rs"), LIB_RS);
@@ -75,7 +77,7 @@ impl RustProjectMaker {
             (PathBuf::from("LICENSE-MIT"), LICENSE_MIT),
         ];
 
-        RustProjectMaker { bin_file, lib_file, common_plain_files, templates }
+        ProjectMaker { bin_file, lib_file, common_plain_files, templates }
     }
 
     pub fn execute(self, args: Args) -> Result<()> {

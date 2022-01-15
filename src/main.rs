@@ -12,10 +12,8 @@ use log::LevelFilter::Debug;
 use simplelog::{ColorChoice, TermLogger, TerminalMode};
 
 use crate::cli::{Cli, SubCommands};
-use crate::rust::RustProjectMaker;
 
 pub mod cli;
-pub mod datetime;
 pub mod filesystem;
 pub mod git;
 pub mod rust;
@@ -27,8 +25,7 @@ pub fn main() -> Result<()> {
     let cli: Cli = Cli::parse();
     let now = Instant::now();
     match cli.subcommand {
-        SubCommands::Rust(options) => RustProjectMaker::new().execute(options)?,
-        SubCommands::Go => unreachable!(),
+        SubCommands::Rust(args) => crate::rust::ProjectMaker::new().execute(args)?,
     }
     let elapsed = now.elapsed();
     log::info!("finished make project in {:?}", elapsed);

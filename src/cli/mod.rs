@@ -14,7 +14,4 @@ pub enum SubCommands {
     /// new or initialize `Rust` project
     #[clap(subcommand)]
     Rust(self::rust::Args),
-
-    /// create or initialize `Go` project
-    Go,
 }

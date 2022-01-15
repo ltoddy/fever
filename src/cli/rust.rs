@@ -14,7 +14,7 @@ pub enum Args {
 
 // can't specify both lib and binary outputs
 
-#[derive(Clone, Debug, Parser)]
+#[derive(Debug, Parser)]
 pub struct InitArgs {
     #[clap(long = "kind", default_value = "bin")]
     pub kind: NewProjectKind,
@@ -31,7 +31,7 @@ pub struct InitArgs {
     pub description: String,
 }
 
-#[derive(Clone, Debug, Parser)]
+#[derive(Debug, Parser)]
 pub struct NewArgs {
     pub path: PathBuf,
 
@@ -51,7 +51,7 @@ pub struct NewArgs {
     // pub registry: Option<String>, TODO
 }
 
-#[derive(Clone, Debug, Subcommand)]
+#[derive(Debug, Subcommand)]
 pub enum NewProjectKind {
     Bin,
     Lib,
