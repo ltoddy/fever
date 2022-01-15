@@ -7,27 +7,28 @@
 use std::time::Instant;
 
 use anyhow::Result;
+use clap::Parser;
 use log::LevelFilter::Debug;
 use simplelog::{ColorChoice, TermLogger, TerminalMode};
-use structopt::StructOpt;
 
-use crate::options::Options;
+use crate::cli::{Cli, SubCommands};
 use crate::rust::RustProjectMaker;
 
+pub mod cli;
 pub mod datetime;
 pub mod filesystem;
 pub mod git;
-pub mod options;
 pub mod rust;
 pub mod template;
 
 pub fn main() -> Result<()> {
     TermLogger::init(Debug, Default::default(), TerminalMode::Mixed, ColorChoice::Auto).unwrap();
 
-    let opts: Options = Options::from_args();
+    let cli: Cli = Cli::parse();
     let now = Instant::now();
-    match opts {
-        Options::Rust(options) => RustProjectMaker::new().execute(options)?,
+    match cli.subcommand {
+        SubCommands::Rust(options) => RustProjectMaker::new().execute(options)?,
+        SubCommands::Go => unreachable!(),
     }
     let elapsed = now.elapsed();
     log::info!("finished make project in {:?}", elapsed);

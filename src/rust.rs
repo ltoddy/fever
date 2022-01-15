@@ -12,10 +12,10 @@ use anyhow::{Context, Result};
 use git2::Repository;
 use serde::Serialize;
 
+use crate::cli::rust::{Args, InitArgs, NewArgs, NewProjectKind};
 use crate::datetime::current_year;
 use crate::filesystem::basename;
 use crate::git::RepositoryExt;
-use crate::options::rust::{InitOptions, NewOptions, NewProjectKind, Options};
 use crate::template::render;
 
 const GIT_IGNORE: &str = include_str!("templates/rust/.gitignore");
@@ -78,15 +78,15 @@ impl RustProjectMaker {
         RustProjectMaker { bin_file, lib_file, common_plain_files, templates }
     }
 
-    pub fn execute(self, options: Options) -> Result<()> {
-        match options {
-            Options::Init(options) => self.initialize_project(options),
-            Options::New(options) => self.new_project(options),
+    pub fn execute(self, args: Args) -> Result<()> {
+        match args {
+            Args::Init(args) => self.initialize_project(args),
+            Args::New(args) => self.new_project(args),
         }
     }
 
-    fn initialize_project(self, options: InitOptions) -> Result<()> {
-        let InitOptions { kind, name, edition, description } = options;
+    fn initialize_project(self, args: InitArgs) -> Result<()> {
+        let InitArgs { kind, name, edition, description } = args;
         let project_dir = current_dir().with_context(|| "the current working directory value is invalid")?;
 
         Self::create_github_workflows_directory(&project_dir)?;
@@ -102,8 +102,8 @@ impl RustProjectMaker {
         Ok(())
     }
 
-    fn new_project(self, options: NewOptions) -> Result<()> {
-        let NewOptions { path: project_dir, kind, name, edition, description } = options;
+    fn new_project(self, args: NewArgs) -> Result<()> {
+        let NewArgs { path: project_dir, kind, name, edition, description } = args;
 
         if !project_dir.is_dir() {
             log::info!("creating directory `{}`", project_dir.display());
