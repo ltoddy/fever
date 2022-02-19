@@ -16,6 +16,7 @@ use crate::cli::{Cli, SubCommands};
 pub mod cli;
 pub mod filesystem;
 pub mod git;
+pub mod haskell;
 pub mod rust;
 pub mod template;
 
@@ -26,6 +27,7 @@ pub fn main() -> Result<()> {
     let now = Instant::now();
     match cli.subcommand {
         SubCommands::Rust(args) => crate::rust::ProjectMaker::new().execute(args)?,
+        SubCommands::Haskell(args) => crate::haskell::ProjectMaker::new().execute(args)?,
     }
     let elapsed = now.elapsed();
     log::info!("finished make project in {:?}", elapsed);

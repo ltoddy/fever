@@ -1,5 +1,6 @@
 use clap::{Parser, Subcommand};
 
+pub mod haskell;
 pub mod rust;
 
 #[derive(Debug, Parser)]
@@ -14,4 +15,8 @@ pub enum SubCommands {
     /// new or initialize `Rust` project
     #[clap(subcommand)]
     Rust(self::rust::Args),
+
+    /// new or initialize `Haskell` project
+    #[clap(subcommand)]
+    Haskell(self::haskell::Args),
 }
